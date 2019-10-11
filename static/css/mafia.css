@@ -1,0 +1,115 @@
+.txt
+{
+  font-family:'Lobster', cursive;
+  position: absolute;
+  top: 40%;
+  left: 102%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  background-color: whitesmoke;
+  color: black;
+  font-size: 18px;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  text-align: center;
+  width: 120%;
+}
+
+img.party 
+{
+    position: absolute;
+    z-index: 5;
+    width: 600px;
+    height: 800px;
+    left: 50%;
+    top: 50%;
+    margin-left: -300px;
+    margin-top: -400px;
+}
+
+@media (max-width: 500px) 
+{
+    img.party 
+    {
+        position: absolute;
+        z-index: 5;
+        width: 900px;
+        height: 1300px;
+        left: 50%;
+        top: 50%;
+        margin-left: -450px;
+        margin-top: -650px;
+    }
+}
+
+.btn {
+    opacity: 1;
+    font-size: 25px;
+    font-family:'Arial';
+    text-align: center;
+    position: absolute;
+    z-index: 10;
+    width: 300px;
+    height: 100px;
+    left: 50%;
+    top: 53%;
+    margin-left: -150px;
+    margin-top: -50px;
+    background-color: whitesmoke;
+}
+
+.gameModeBtn {
+    opacity: 1;
+    font-size: 25px;
+    font-family:'Arial';
+    text-align: center;
+    position: absolute;
+    z-index: 10;
+    width: 450px;
+    height: 80px;
+    left: 50%;
+    top: 53%;
+    margin-left: -225px;
+    margin-top: -40px;
+    background-color: whitesmoke;
+}
+
+.gameModeBtn2 {
+    opacity: 1;
+    font-size: 25px;
+    font-family:'Arial';
+    text-align: center;
+    position: absolute;
+    z-index: 10;
+    width: 450px;
+    height: 80px;
+    left: 50%;
+    top: 41%;
+    margin-left: -225px;
+    margin-top: -40px;
+    background-color: whitesmoke;
+}
+
+input[type=text] 
+{
+    opacity: 1.5;
+    font-size: 25px;
+    font-family:'Arial';
+    text-align: center;
+    position: absolute;
+    z-index: 10;
+    width: 400px;
+    height: 50px;
+    left: 50%;
+    top: 50%;
+    margin-left: 0px;
+    margin-top: -80px;
+    color: black;
+}
+
+::placeholder
+{
+    color: black;
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Mafia</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="static/css/main.css" />
+		<noscript><link rel="stylesheet" href="static/css/noscript.css" /></noscript>
+		<link rel="shortcut icon" href="https://cdn2.iconfinder.com/data/icons/mafia-2/64/hat-mafia_hat-fashion-mafia-512.png" />
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<h1>M A F I A</h1>
+				<nav>
+					<ul>
+						<li><a href="#" onclick="reset()">Reset</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Intro -->
+			<section id="intro" class="main style1 dark fullscreen">
+				<div id="content">
+					<div class="container" id="Game">
+							<button class="btn" onclick="checknumPlayers();">Play</button>
+					</div>
+				</div>
+			</section>
+
+		<!-- Scripts -->
+			<script src="static/js/jquery.min.js"></script>
+			<script src="static/js/jquery.poptrox.min.js"></script>
+			<script src="static/js/jquery.scrolly.min.js"></script>
+			<script src="static/js/jquery.scrollex.min.js"></script>
+			<script src="static/js/browser.min.js"></script>
+			<script src="static/js/breakpoints.min.js"></script>
+			<script src="static/js/util.js"></script>
+			<script src="static/js/main.js"></script>
+
+	</body>
+
+	<script>
+		var funnyDeaths = ["Overate At A Feast Given In Their Honor","Was Killed By A Canonball That Was Fired In Order To Salute Them",
+		"Stuck A Piece Of Whale Bone Through Their Urinary Tract To Clear A Blockage","Swung A Baseball Bat So Hard That It Ruptured Their Bladder",
+		"Accidentally Shot Themselves In Court While Demonstrating To A Jury How Their Client's Alleged Victim Might Have Accidentally Shot Themself",
+		"Got Bit By A Monkey And Died","Fell Down A Chimney Into A Furnace After Mistaking The Chimney For A Balcony",
+		"Accidentally Torpedoed Their Own Ship","Drunk Themselves To Death With Carrot Juice",
+		"Choked On An Eye Drop Bottle Cap","Played Starcraft For Too Long And Died"];
+		var totalPlayers = 0;
+		var numMafia = 0;
+		var numDoctors = 0;
+		var numSherifffs = 0;
+		var numCivilians = 0;
+		var roles = [];
+		var names = [];
+		var killer = 0;
+		var saved = 0;
+
+    var socket = new WebSocket("ws://localhost:8765");
+
+    socket.onopen = function(e) 
+    {
+      socket.send("newPlayer");
+    };
+
+		function reset()
+		{
+      totalPlayers = 0;
+			numMafia = 0;
+			numDoctors = 0;
+			numSheriffs = 0;
+			numCivilians = 0;
+			roles = [];
+			names = [];
+
+      socket = new WebSocket("ws://localhost:8765");
+
+      socket.onopen = function(e) 
+      {
+        socket.send("resetGame")
+      };
+
+			var content = document.getElementById('content');
+			content.innerHTML = `
+			<div class="container" id="Game">
+				<button class="btn" onclick="checknumPlayers();">Play</button>
+			</div>
+			`;
+		}
+
+    function checknumPlayers()
+    {
+      socket = new WebSocket("ws://localhost:8765");
+
+      socket.onopen = function(e) 
+      {
+      socket.send("howmanyPlayers")
+      };
+      
+      socket.onmessage = function(event) 
+      {
+          totalPlayers = parseInt(event.data);
+
+          if(totalPlayers < 4)
+          {
+            content.innerHTML = `
+          <div class="container" id="Game">
+            <button class="btn" onclick="checknumPlayers();">Standby For ${4-totalPlayers} More Players</button>
+          </div>
+          `;
+          }
+          else
+          {
+            socket2 = new WebSocket("ws://localhost:8765");
+
+            socket2.onopen = function(e)
+            {
+              socket2.send("gameReady")
+            };
+            
+            content.innerHTML = `
+          <div class="container" id="Game">
+            <button class="btn" onclick="seeRole()">Click To See Role</button>
+          </div>
+          `;
+      }
+      };
+    }
+
+    function seeRole()
+    {
+      socket = new WebSocket("ws://localhost:8765");
+
+      socket.onopen = function(e) 
+      {
+      socket.send("getRole")
+      };
+
+      socket.onmessage = function(event) 
+      {
+        content.innerHTML = `
+          <div class="container" id="Game">
+            <input id="Spies" class="txt" type="text" value = "You Got Position: ${event.data}" readonly></input>
+            <button class="btn" onclick="">Next</button>
+          </div>
+          `;
+      }
+
+    }
+	</script>
+</html>
