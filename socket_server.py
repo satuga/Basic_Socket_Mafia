@@ -70,7 +70,7 @@ async def main(websocket, path):
 
     if message == "resetGame":
         myquery = {"id": 13579}
-        newvalues = { "$set": {"players": 0, "roles":"", "game_session":"inactive"}}
+        newvalues = { "$set": {"players": 0, "roles":[], "player_roles":[], "game_session":"inactive"}}
         db.mafia.update_one(myquery, newvalues)
         await websocket.send(str(getnumPlayers(db)))
 
@@ -84,8 +84,57 @@ async def main(websocket, path):
             newvalues = { "$set": {"roles": roles,"game_session":"active"}}
             db.mafia.update_one(myquery, newvalues)
     
-    if message == "getRole":
-        await websocket.send(str(getRole(db)))
+    if message.split(":")[0] == "processName":
+        for a in db.mafia.find():
+            playerList = a["player_roles"]
+        myquery = {"id": 13579}
+        key = message.split(":")[1]
+        value = getRole(db)
+        playerList.append({key:value})
+        newvalues = { "$set": {"player_roles":playerList}}
+        db.mafia.update_one(myquery, newvalues)
+        await websocket.send(str(value))
+
+    if message == "getPlayers":
+        final_list = ""
+        for a in db.mafia.find():
+            playerList = a["player_roles"]
+            roles = a["roles"]
+        if len(roles) == 0:
+            allPlayers = []
+            for things in playerList:
+                string_thing = str(things)
+                string_thing = string_thing.replace("{","")
+                string_thing = string_thing.replace('"',"")
+                string_thing = string_thing.replace("'","")
+                allPlayers.append(string_thing.split(":")[0])
+            for i in range(0,len(allPlayers)):
+                if(i == len(allPlayers)-1):
+                    final_list = final_list + allPlayers[i]
+                else:
+                    final_list = final_list + allPlayers[i] + ","
+            await websocket.send(final_list)
+        else:
+            await websocket.send("wait")
+
+    if message.split(":")[0] == "investigate":
+        for a in db.mafia.find():
+            playerList = a["player_roles"]
+        allPlayers = []
+        allRoles = []
+        for things in playerList:
+            string_thing = str(things)
+            string_thing = string_thing.replace("{","")
+            string_thing = string_thing.replace('"',"")
+            string_thing = string_thing.replace("'","")
+            allPlayers.append(string_thing.split(":")[0])
+            allRoles.append(string_thing.split(":")[1])
+        await websocket.send(allRoles[allPlayers.index(message.split(":")[1].replace("}",""))])
+
+    # if message.split(":")[0] == "playRound":
+    #     if message.split(":")[1] == "mafia":
+    #         #how do I process this information???
+
 
 
 start_server = websockets.serve(main, "localhost", 8765)

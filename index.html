@@ -41,22 +41,24 @@
 
 	</body>
 
-	<script>
-		var funnyDeaths = ["Overate At A Feast Given In Their Honor","Was Killed By A Canonball That Was Fired In Order To Salute Them",
-		"Stuck A Piece Of Whale Bone Through Their Urinary Tract To Clear A Blockage","Swung A Baseball Bat So Hard That It Ruptured Their Bladder",
-		"Accidentally Shot Themselves In Court While Demonstrating To A Jury How Their Client's Alleged Victim Might Have Accidentally Shot Themself",
-		"Got Bit By A Monkey And Died","Fell Down A Chimney Into A Furnace After Mistaking The Chimney For A Balcony",
-		"Accidentally Torpedoed Their Own Ship","Drunk Themselves To Death With Carrot Juice",
-		"Choked On An Eye Drop Bottle Cap","Played Starcraft For Too Long And Died"];
-		var totalPlayers = 0;
-		var numMafia = 0;
-		var numDoctors = 0;
-		var numSherifffs = 0;
-		var numCivilians = 0;
-		var roles = [];
-		var names = [];
-		var killer = 0;
-		var saved = 0;
+<script>
+	var funnyDeaths = ["Overate At A Feast Given In Their Honor","Was Killed By A Canonball That Was Fired In Order To Salute Them",
+	"Stuck A Piece Of Whale Bone Through Their Urinary Tract To Clear A Blockage","Swung A Baseball Bat So Hard That It Ruptured Their Bladder",
+	"Accidentally Shot Themselves In Court While Demonstrating To A Jury How Their Client's Alleged Victim Might Have Accidentally Shot Themself",
+	"Got Bit By A Monkey And Died","Fell Down A Chimney Into A Furnace After Mistaking The Chimney For A Balcony",
+	"Accidentally Torpedoed Their Own Ship","Drunk Themselves To Death With Carrot Juice",
+	"Choked On An Eye Drop Bottle Cap","Played Starcraft For Too Long And Died"];
+	var totalPlayers = 0;
+	var numMafia = 0;
+	var numDoctors = 0;
+	var numSherifffs = 0;
+	var numCivilians = 0;
+	var roles = [];
+	var names = [];
+	var killer = 0;
+	var saved = 0;
+	var clientID = "";
+	var clientRole = "";
 
     var socket = new WebSocket("ws://localhost:8765");
 
@@ -65,30 +67,32 @@
       socket.send("newPlayer");
     };
 
-		function reset()
+	function reset()
+	{
+		totalPlayers = 0;
+		numMafia = 0;
+		numDoctors = 0;
+		numSheriffs = 0;
+		numCivilians = 0;
+		roles = [];
+		names = [];
+		clientID = "";
+		clientRole = "";
+
+		socket = new WebSocket("ws://localhost:8765");
+
+		socket.onopen = function(e) 
 		{
-      totalPlayers = 0;
-			numMafia = 0;
-			numDoctors = 0;
-			numSheriffs = 0;
-			numCivilians = 0;
-			roles = [];
-			names = [];
+			socket.send("resetGame")
+		};
 
-      socket = new WebSocket("ws://localhost:8765");
-
-      socket.onopen = function(e) 
-      {
-        socket.send("resetGame")
-      };
-
-			var content = document.getElementById('content');
-			content.innerHTML = `
-			<div class="container" id="Game">
-				<button class="btn" onclick="checknumPlayers();">Play</button>
-			</div>
-			`;
-		}
+		var content = document.getElementById('content');
+		content.innerHTML = `
+		<div class="container" id="Game">
+			<button class="btn" onclick="checknumPlayers();">Play</button>
+		</div>
+		`;
+	}
 
     function checknumPlayers()
     {
@@ -122,32 +126,153 @@
             
             content.innerHTML = `
           <div class="container" id="Game">
-            <button class="btn" onclick="seeRole()">Click To See Role</button>
+            <button class="btn" onclick="placeName()">Click Here To Play</button>
           </div>
           `;
       }
       };
     }
 
-    function seeRole()
-    {
-      socket = new WebSocket("ws://localhost:8765");
+	function placeName()
+	{
+		var content = document.getElementById('content');
+		content.innerHTML = `
+		<input id="Name" class="txt" type="text" placeholder = "Enter Your Name Here" value = ""></input>
+		<button class="btn" onclick="processName(Name.value)">Click Here When Done</button>
+		`;
+	}
 
-      socket.onopen = function(e) 
-      {
-      socket.send("getRole")
-      };
+	function processName(name)
+	{
+		socket = new WebSocket("ws://localhost:8765");
+		
+		socket.onopen = function(e) 
+		{
+			socket.send("processName:"+name)
+			clientID = name;
+		};
 
-      socket.onmessage = function(event) 
-      {
-        content.innerHTML = `
-          <div class="container" id="Game">
-            <input id="Spies" class="txt" type="text" value = "You Got Position: ${event.data}" readonly></input>
-            <button class="btn" onclick="">Next</button>
-          </div>
-          `;
-      }
+		socket.onmessage = function(event) 
+		{
+			content.innerHTML = `
+			<div class="container" id="Game">
+				<input id="Spies" class="txt" type="text" value = "You Got Position: ${event.data}" readonly></input>
+				<button class="btn" onclick="playRound()">Next</button>
+			</div>
+			`;
+			clientRole = event.data;
+		}
+	}
 
-    }
-	</script>
+	function playRound()
+	{
+
+		socket = new WebSocket("ws://localhost:8765");
+		
+		socket.onopen = function(e) 
+		{
+			socket.send("getPlayers");
+		};
+
+		socket.onmessage = function(event) 
+		{
+			if(event.data == "wait")
+			{
+				var content = document.getElementById('content');
+				content.innerHTML = `<button class="btn" onclick="playRound()">Please Wait For Players</button>
+				`;
+				
+			}
+			else
+			{
+				var parse_data = event.data
+				parse_data = parse_data.replace("[",'');
+				parse_data = parse_data.replace("]",'');
+				parse_data = parse_data.replace("'",'');
+				parse_data = parse_data.replace('"','');
+				names = parse_data.split(",");
+
+				if(clientRole == "mafia")
+				{
+					var instruction = '<h2>Mafia Kill: </h2>';
+					for(var i = 0; i < names.length; i++)
+					{
+						instruction += "<button class='btn' onclick=processDecision('" + String(names[i]) + "')>" + names[i] + "</button><br><br>";
+					}
+					var content = document.getElementById('content');
+					content.innerHTML = `
+					${instruction}
+					`;
+
+				}
+
+				if(clientRole == "doctor")
+				{
+					var instruction = '<h2>Doctor Save: </h2>';
+					for(var i = 0; i < names.length; i++)
+					{
+						instruction += "<button class='btn' onclick=processDecision('" + String(names[i]) + "')>" + names[i] + "</button><br><br>";
+					}
+					var content = document.getElementById('content');
+					content.innerHTML = `
+					${instruction}
+					`;
+
+				}
+
+				if(clientRole == "sheriff")
+				{
+					var instruction = '<h2>Sheriff Investigate: </h2>';
+					for(var i = 0; i < names.length; i++)
+					{
+						instruction += "<button class='btn' onclick=investigate('" + String(names[i]) + "')>" + names[i] + "</button><br><br>";
+					}
+					var content = document.getElementById('content');
+					content.innerHTML = `
+					${instruction}
+					`;
+
+				}
+
+				if(clientRole == "civilian")
+				{
+					var instruction = '<h2>Civilian Hit Next: </h2> <';
+					instruction += "<button class='btn' onclick=processDecision('nobody')>" + "Next" + "</button><br><br>";
+					var content = document.getElementById('content');
+					content.innerHTML = `
+					${instruction}
+					`;
+				}
+			}
+
+		}
+	}
+
+	function investigate(choice)
+	{
+		socket = new WebSocket("ws://localhost:8765");
+		
+		socket.onopen = function(e) 
+		{
+			socket.send("investigate:"+choice);
+		};
+
+		socket.onmessage = function(event) 
+		{
+			var content = document.getElementById('content');
+			content.innerHTML = `
+				<div class="container" id="Game">
+					<input id="Spies" class="txt" type="text" value = "${choice} is a${event.data.replace('}',"")}" readonly></input>
+					<button class="btn" onclick="processDecision('${choice}')">Next</button>
+				</div>
+				`;
+		}
+
+	}
+
+	function processDecision(choice)
+	{
+		console.log("keep working...");
+	}
+</script>
 </html>
